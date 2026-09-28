@@ -1,46 +1,47 @@
 import React from 'react';
-import { ClassroomProvider, useClassroom } from './context/ClassroomContext';
-import { Navbar } from './components/layout/Navbar';
-import { Footer } from './components/layout/Footer';
-import { HeroSection } from './components/overview/HeroSection';
-import { TeacherCockpit } from './components/teacher/TeacherCockpit';
-import { StudentPadSimulator } from './components/student/StudentPadSimulator';
-import { PipelineExplorer } from './components/pipeline/PipelineExplorer';
-import { VisionSandbox } from './components/vision/VisionSandbox';
-import { FeasibilityImpact } from './components/feasibility/FeasibilityImpact';
-import { ExplainableAiModal } from './components/teacher/ExplainableAiModal';
-import { BreathingModal } from './components/common/BreathingModal';
+import { ProductionClassroomProvider, useProductionClassroom } from './context/ProductionClassroomContext';
+import { ProductionHeader } from './components/layout/ProductionHeader';
+import { ProductionFooter } from './components/layout/ProductionFooter';
+import { LiveClassroomView } from './components/teacher/LiveClassroomView';
+import { LessonModulesView } from './components/teacher/LessonModulesView';
+import { AnalyticsView } from './components/teacher/AnalyticsView';
+import { DeviceFleetView } from './components/teacher/DeviceFleetView';
+import { StudentTabletPortal } from './components/student/StudentTabletPortal';
+import { MindfulBreakModal } from './components/modals/MindfulBreakModal';
 
 const AppContent: React.FC = () => {
-  const { activeTab } = useClassroom();
+  const { userRole, teacherTab } = useProductionClassroom();
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF9F5] text-slate-800">
-      <Navbar />
+      <ProductionHeader />
 
       <main className="flex-1">
-        {activeTab === 'overview' && <HeroSection />}
-        {activeTab === 'teacher' && <TeacherCockpit />}
-        {activeTab === 'student' && <StudentPadSimulator />}
-        {activeTab === 'pipeline' && <PipelineExplorer />}
-        {activeTab === 'vision' && <VisionSandbox />}
-        {activeTab === 'impact' && <FeasibilityImpact />}
+        {userRole === 'teacher' ? (
+          <>
+            {teacherTab === 'live' && <LiveClassroomView />}
+            {teacherTab === 'lessons' && <LessonModulesView />}
+            {teacherTab === 'analytics' && <AnalyticsView />}
+            {teacherTab === 'fleet' && <DeviceFleetView />}
+          </>
+        ) : (
+          <StudentTabletPortal />
+        )}
       </main>
 
-      <Footer />
+      <ProductionFooter />
 
       {/* Global Interactive Overlays */}
-      <ExplainableAiModal />
-      <BreathingModal />
+      <MindfulBreakModal />
     </div>
   );
 };
 
 export const App: React.FC = () => {
   return (
-    <ClassroomProvider>
+    <ProductionClassroomProvider>
       <AppContent />
-    </ClassroomProvider>
+    </ProductionClassroomProvider>
   );
 };
 

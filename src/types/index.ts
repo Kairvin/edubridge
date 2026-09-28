@@ -1,108 +1,99 @@
-export type StudentState = 'flow' | 'confused' | 'stressed' | 'distracted' | 'anomaly' | 'idle';
+export type StudentStatus = 'in_flow' | 'stuck' | 'fatigued' | 'distracted' | 'completed';
 
-export interface TelemetryData {
-  headTilt: number; // degrees (-20 to +20)
-  blinkRate: number; // blinks/min (normal: 15-20)
-  gazeDeviationSeconds: number; // seconds looking off-screen
-  eyebrowFurrowIntensity: number; // 0.0 to 1.0 (indicates concentration vs perplexity)
-  screenHesitationMs: number; // ms spent frozen on step
-  cameraPrivacyMode: 'on-device-edge' | 'offline-cache';
+export interface StudentTelemetry {
+  screenHesitationSeconds: number;
+  stylusActive: boolean;
+  blinkCadence: 'normal' | 'rapid' | 'sluggish';
+  facialTensionIndex: number; // 0.0 - 1.0 (subtle cognitive friction cue)
+  gazeAlignment: 'on_task' | 'slight_drift' | 'away';
+  batteryPercent: number;
+  tabletConnection: 'mesh_active' | 'cloud_sync' | 'offline_buffered';
 }
 
-export interface StudentHistoryPoint {
-  time: string;
-  state: StudentState;
-  engagement: number;
-}
-
-export interface Student {
+export interface StudentRecord {
   id: string;
   name: string;
   avatar: string;
   rollNo: string;
   seatRow: number;
   seatCol: number;
-  currentSubject: string;
-  currentTopic: string;
-  state: StudentState;
-  engagement: number; // 0 - 100%
-  confusionScore: number; // 0 - 100%
-  stressLevel: number; // 0 - 100%
-  attentionIndex: number; // 0 - 100%
-  telemetry: TelemetryData;
-  history: StudentHistoryPoint[];
-  activeAlertId?: string;
-  notes?: string;
-}
-
-export interface FeatureAttribution {
-  feature: string;
-  importance: number; // 0.0 to 1.0
-  observedValue: string;
-  normalBaseline: string;
-  category: 'vision' | 'interaction' | 'temporal';
-}
-
-export interface XaiReport {
-  id: string;
-  alertId: string;
-  studentId: string;
-  studentName: string;
-  detectedCondition: 'Severe Topic Confusion' | 'Cognitive Overload / High Stress' | 'Sustained Disengagement' | 'Assessment Integrity Anomaly';
-  confidenceScore: number; // 0.0 to 1.0 (e.g. 0.88)
-  modelArchitecture: 'MobileNetV3-Edge + Temporal GRU (Quantized INT8)';
-  inferenceLatencyMs: number; // e.g. 14ms on tablet NPU
-  evidenceSummary: string;
-  featureAttributions: FeatureAttribution[];
-  gradCamRegion: 'Upper Face / Brow Furrow' | 'Gaze Off-Axis / Screen Peripheral' | 'Saccadic Eye Movement' | 'Rapid Scroll Reversal';
-  recommendedInterventions: {
-    id: string;
-    label: string;
-    description: string;
-    icon: 'hint' | 'breathe' | 're-explain' | 'praise';
+  status: StudentStatus;
+  currentStep: number;
+  totalSteps: number;
+  selectedAnswer: string | null;
+  hasAttempted: boolean;
+  isCorrect: boolean;
+  teacherHintReceived?: string;
+  personalNote?: string;
+  telemetry: StudentTelemetry;
+  history: {
+    step: number;
+    timeSpentSeconds: number;
+    attempts: number;
+    outcome: 'success' | 'stuck_resolved' | 'assisted';
   }[];
-  teacherValidation?: {
-    actionTaken: string;
-    feedbackType: 'validated_helpful' | 'dismissed_deep_thinking' | 'dismissed_transient';
-    feedbackNote?: string;
-    timestamp: string;
-  };
 }
 
-export interface AlertNotification {
-  id: string;
-  studentId: string;
-  studentName: string;
-  avatar: string;
-  timestamp: string;
-  type: 'confusion' | 'stress' | 'disengagement' | 'test_anomaly';
-  severity: 'low' | 'medium' | 'high';
-  confidence: number; // 0 - 100
-  headline: string;
-  snippet: string;
-  status: 'pending' | 'addressed' | 'dismissed';
-  xaiReport: XaiReport;
+export interface LessonStep {
+  stepNumber: number;
+  title: string;
+  instruction: string;
+  formulaPrompt?: string;
+  options: {
+    id: string;
+    text: string;
+    isCorrect: boolean;
+    explanation: string;
+  }[];
+  scaffoldHint: string;
+  pedagogicalContext: string;
 }
 
-export interface ClassroomScenario {
+export interface LessonModule {
   id: string;
   title: string;
-  badge: string;
-  description: string;
-  activeSubject: string;
-  mode: 'lecture' | 'exam' | 'offline_edge';
-  studentStateOverrides: { [studentId: string]: Partial<Student> };
+  subject: string;
+  grade: string;
+  estimatedMinutes: number;
+  status: 'active_live' | 'upcoming' | 'completed';
+  totalEnrolled: number;
+  steps: LessonStep[];
 }
 
-export interface CurriculumProblem {
+export interface ClassSession {
   id: string;
+  schoolName: string;
+  className: string;
   subject: string;
-  topic: string;
+  period: string;
+  teacherName: string;
+  teacherTitle: string;
+  activeLesson: LessonModule;
+  isLockdownActive: boolean;
+  isMeshNetworkActive: boolean;
+}
+
+export interface FrictionAlert {
+  id: string;
+  studentId: string;
+  studentName: string;
   stepNumber: number;
-  totalSteps: number;
-  prompt: string;
-  mathFormula?: string;
-  options: { id: string; text: string; isCorrect: boolean; feedback: string }[];
-  hintText: string;
-  calmNudgeText: string;
+  severity: 'moderate' | 'high';
+  title: string;
+  description: string;
+  suggestedAction: string;
+  timestamp: string;
+  isResolved: boolean;
+}
+
+export interface FleetDevice {
+  id: string;
+  studentName: string;
+  rollNo: string;
+  model: string;
+  battery: number;
+  status: 'online' | 'mesh_node' | 'sleep' | 'maintenance';
+  osVersion: string;
+  storageAvailableGb: number;
+  lastSync: string;
 }
